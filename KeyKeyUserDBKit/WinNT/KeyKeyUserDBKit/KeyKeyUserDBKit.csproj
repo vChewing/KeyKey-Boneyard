@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>KeyKeyUserDBKit</RootNamespace>
+    <AssemblyName>KeyKeyUserDBKit</AssemblyName>
+
+    <!-- NuGet Package Properties -->
+    <PackageId>vChewing.Utils.KeyKeyUserDBKit</PackageId>
+    <Version>1.0.1</Version>
+    <Authors>The vChewing Project</Authors>
+    <Company>The vChewing Project</Company>
+    <Product>KeyKeyUserDBKit</Product>
+    <Description>Yahoo! 奇摩輸入法 (KeyKey) 使用者資料庫解密與讀取工具。支援解密 SQLite SEE AES-128 加密的資料庫，並提供 Unigram、Bigram、CandidateOverride 資料存取 API。</Description>
+    <Copyright>Copyright © 2025 The vChewing Project</Copyright>
+    <PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/vChewing/KeyKeyUserDBKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/vChewing/KeyKeyUserDBKit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>vChewing;KeyKey;Yahoo;InputMethod;IME;SQLite;SEE;Decryption;Bopomofo;Zhuyin</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>Initial release with SQLite SEE AES-128 decryption support.</PackageReleaseNotes>
+
+    <!-- Package Settings -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

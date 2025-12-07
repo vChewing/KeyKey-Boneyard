@@ -1,0 +1,44 @@
+{
+	"configurations": [
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:KeyKeyUserDBKit}",
+			"name": "Debug kkdecrypt",
+			"target": "kkdecrypt",
+			"configuration": "debug",
+			"preLaunchTask": "swift: Build Debug kkdecrypt"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:KeyKeyUserDBKit}",
+			"name": "Release kkdecrypt",
+			"target": "kkdecrypt",
+			"configuration": "release",
+			"preLaunchTask": "swift: Build Release kkdecrypt"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:KeyKeyUserDBKit}",
+			"name": "Debug kkdecrypt",
+			"target": "kkdecrypt",
+			"configuration": "debug",
+			"preLaunchTask": "swift: Build Debug kkdecrypt"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:KeyKeyUserDBKit}",
+			"name": "Release kkdecrypt",
+			"target": "kkdecrypt",
+			"configuration": "release",
+			"preLaunchTask": "swift: Build Release kkdecrypt"
+		}
+	]
+}
