@@ -2,18 +2,19 @@
 // ====================
 // This code is released under the SPDX-License-Identifier: `LGPL-3.0-or-later`.
 
+import Foundation
+
 #if canImport(Darwin)
   import SQLite3
 #else
   import CSQLite
 #endif
-import Foundation
 
 // MARK: - KeyKeyUserDBKit.UserDatabase
 
 extension KeyKeyUserDBKit {
   /// 使用者資料庫讀取器
-  public final class UserDatabase: Sendable {
+  public final class UserDatabase: Sendable, UserPhraseDataSource {
     // MARK: Lifecycle
 
     // MARK: - Initializers

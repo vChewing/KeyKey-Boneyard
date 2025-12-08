@@ -11,7 +11,7 @@ namespace KeyKeyUserDBKit;
 /// <summary>
 /// 使用者資料庫讀取器
 /// </summary>
-public sealed class UserDatabase : IDisposable, IEnumerable<Gram>, IAsyncEnumerable<Gram> {
+public sealed class UserDatabase : IDisposable, IUserPhraseDataSource, IAsyncEnumerable<Gram> {
   /// <summary>
   /// 候選字覆蓋記錄的預設權重
   /// </summary>

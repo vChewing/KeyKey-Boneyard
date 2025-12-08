@@ -8,4 +8,8 @@ public enum UnitTestAssets4KeyKeyUserDBKit {
   public static let assetURL: URL? = {
     Bundle.module.url(forResource: "SmartMandarinUserData", withExtension: "db")
   }()
+
+  public static let mjsrTextFileURL: URL? = {
+    Bundle.module.url(forResource: "KimoOfficialOutputDataText", withExtension: "txt")
+  }()
 }

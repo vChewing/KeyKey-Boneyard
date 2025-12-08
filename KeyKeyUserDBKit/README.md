@@ -23,6 +23,7 @@ Yahoo! 奇摩輸入法 (KeyKey) 使用者資料庫解密 Swift Package。
 ## 功能
 
 - 🔓 解密 SQLite SEE AES-128 加密的使用者資料庫 (`SmartMandarinUserData.db`)
+- 📝 解析 MJSR（Manjusri 文殊）匯出文字檔案（奇摩輸入法匯出格式）
 - 🔤 解碼注音符號 (Bopomofo) qstring 欄位
 - 📖 讀取使用者詞彙資料（單元圖 (Unigram)、雙元圖 (Bigram)、候選字覆蓋）
 - 🔄 支援 `Sequence` 與 `AsyncSequence` 迭代
@@ -42,7 +43,9 @@ KeyKeyUserDBKit/
 │   │   ├── Gram.swift             # 語料結構體
 │   │   ├── PhonaSet.swift         # 注音符號處理
 │   │   ├── SEEDecryptor.swift     # SQLite SEE AES-128 解密器
-│   │   └── UserDatabase.swift     # 使用者資料庫讀取器
+│   │   ├── UserDatabase.swift     # 使用者資料庫讀取器
+│   │   ├── UserPhraseDataSource.swift   # 資料來源協定
+│   │   └── UserPhraseTextFileObj.swift  # MJSR 匯出檔案解析器
 │   └── KeyKeyDecryptCLI/          # 命令列工具 (kkdecrypt)
 │       └── main.swift
 └── Tests/
@@ -130,6 +133,43 @@ for await gram in db.async {
 }
 ```
 
+### 解析 MJSR 匯出檔案
+
+奇摩輸入法的匯出功能會產生 MJSR（Manjusri 文殊）格式的文字檔案，其中包含使用者單字詞及加密的 database block：
+
+```swift
+import KeyKeyUserDBKit
+
+// 從檔案載入 MJSR 匯出檔
+let textFile = try KeyKeyUserDBKit.UserPhraseTextFileObj(path: "export.txt")
+
+// 或從 URL 載入
+let textFile = try KeyKeyUserDBKit.UserPhraseTextFileObj(url: fileURL)
+
+// 取得所有語料資料（與 UserDatabase 相同的 API）
+let allGrams = try textFile.fetchAllGrams()
+
+for gram in allGrams {
+    print("\(gram.current) → \(gram.keyArray.joined(separator: "-"))")
+}
+
+// UserDatabase 與 UserPhraseTextFileObj 都實作 UserPhraseDataSource 協定
+// 可以統一處理不同資料來源
+func processDataSource(_ source: some KeyKeyUserDBKit.UserPhraseDataSource) throws {
+    for gram in source {
+        print(gram.describe())
+    }
+}
+
+// 使用資料庫
+let db = try KeyKeyUserDBKit.UserDatabase(path: "decrypted.db")
+try processDataSource(db)
+
+// 使用匯出檔案
+let textFile = try KeyKeyUserDBKit.UserPhraseTextFileObj(path: "export.txt")
+try processDataSource(textFile)
+```
+
 ### 注音解碼
 
 ```swift
@@ -172,6 +212,8 @@ swift run kkdecrypt SmartMandarinUserData.db decrypted.db
 | `KeyKeyUserDBKit.PhonaSet`          | `PhonaSet`                        |
 | `KeyKeyUserDBKit.SEEDecryptor`      | `SEEDecryptor`                    |
 | `KeyKeyUserDBKit.UserDatabase`      | `UserDatabase`                    |
+| `KeyKeyUserDBKit.UserPhraseTextFileObj` | `UserPhraseTextFileObj`       |
+| `KeyKeyUserDBKit.UserPhraseDataSource` | `IUserPhraseDataSource`        |
 | `fetchUnigrams()`                   | `FetchUnigrams()`                 |
 | `fetchBigrams(limit:)`              | `FetchBigrams(int? limit)`        |
 | `fetchCandidateOverrides()`         | `FetchCandidateOverrides()`       |
@@ -208,6 +250,16 @@ order = (high_char - 48) * 79 + (low_char - 48)
 
 syllable = consonant | (middle << 5) | (vowel << 7) | (tone << 11)
 ```
+
+## MJSR 匯出格式
+
+MJSR（Manjusri 文殊）是奇摩輸入法的匯出檔案格式：
+
+- **Header**: `MJSR version 1.0.0`
+- **使用者單字詞**: Tab 分隔格式 (`word\treading\tprobability\tbackoff`)
+- **`<database>` block**: 十六進位編碼的加密 SQLite 資料庫
+  - 包含 `user_bigram_cache` 和 `user_candidate_override_cache` 表格
+  - 加密密鑰: `mjsrexportmjsrex`（16 bytes）
 
 ## 授權
 

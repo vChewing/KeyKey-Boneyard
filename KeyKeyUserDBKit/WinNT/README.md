@@ -21,6 +21,7 @@
 ## 功能
 
 - 🔓 解密 SQLite SEE AES-128 加密的使用者資料庫 (`SmartMandarinUserData.db`)
+- 📝 解析 MJSR（Manjusri 文殊）匯出文字檔案（奇摩輸入法匯出格式）
 - 🔤 解碼注音符號 (Bopomofo) qstring 欄位
 - 📖 讀取使用者詞彙資料（單元圖、雙元圖、候選字覆蓋）
 - 🔄 支援 `IEnumerable<Gram>` 與 `IAsyncEnumerable<Gram>` 迭代
@@ -34,12 +35,15 @@ WinNT/
 │   ├── Gram.cs                  # 語料結構體
 │   ├── PhonaSet.cs              # 注音符號處理
 │   ├── SEEDecryptor.cs          # SQLite SEE AES-128 解密器
-│   └── UserDatabase.cs          # 使用者資料庫讀取器
+│   ├── UserDatabase.cs          # 使用者資料庫讀取器
+│   ├── IUserPhraseDataSource.cs # 資料來源介面
+│   └── UserPhraseTextFileObj.cs # MJSR 匯出檔案解析器
 ├── KeyKeyUserDBKit.Tests/       # 單元測試 (xUnit)
 │   ├── GramTests.cs
 │   ├── PhonaSetTests.cs
 │   ├── SEEDecryptorTests.cs
-│   └── UserDatabaseTests.cs
+│   ├── UserDatabaseTests.cs
+│   └── UserPhraseTextFileObjTests.cs
 └── KeyKeyDecryptCLI/            # 命令列工具 (kkdecrypt)
     └── Program.cs
 ```
@@ -117,6 +121,47 @@ await foreach (var gram in db)
 }
 ```
 
+### 解析 MJSR 匯出檔案
+
+奇摩輸入法的匯出功能會產生 MJSR（Manjusri 文殊）格式的文字檔案，其中包含使用者單字詞及加密的 database block：
+
+```csharp
+using KeyKeyUserDBKit;
+
+// 從檔案載入 MJSR 匯出檔
+var textFile = UserPhraseTextFileObj.FromPath("export.txt");
+
+// 或從字串內容載入
+var content = File.ReadAllText("export.txt");
+var textFile = new UserPhraseTextFileObj(content);
+
+// 取得所有語料資料（與 UserDatabase 相同的 API）
+var allGrams = textFile.FetchAllGrams();
+
+foreach (var gram in allGrams)
+{
+    Console.WriteLine($"{gram.Current} → {string.Join("-", gram.KeyArray)}");
+}
+
+// UserDatabase 與 UserPhraseTextFileObj 都實作 IUserPhraseDataSource 介面
+// 可以統一處理不同資料來源
+void ProcessDataSource(IUserPhraseDataSource source)
+{
+    foreach (var gram in source)
+    {
+        Console.WriteLine(gram.Describe());
+    }
+}
+
+// 使用資料庫
+using var db = new UserDatabase("decrypted.db");
+ProcessDataSource(db);
+
+// 使用匯出檔案
+using var textFile = UserPhraseTextFileObj.FromPath("export.txt");
+ProcessDataSource(textFile);
+```
+
 ### 注音解碼
 
 ```csharp
@@ -160,6 +205,8 @@ dotnet run --project KeyKeyDecryptCLI -- dump decrypted.db
 | `KeyKeyUserDBKit.PhonaSet`          | `PhonaSet`                        |
 | `KeyKeyUserDBKit.SEEDecryptor`      | `SEEDecryptor`                    |
 | `KeyKeyUserDBKit.UserDatabase`      | `UserDatabase`                    |
+| `KeyKeyUserDBKit.UserPhraseTextFileObj` | `UserPhraseTextFileObj`       |
+| `KeyKeyUserDBKit.UserPhraseDataSource` | `IUserPhraseDataSource`        |
 | `fetchUnigrams()`                   | `FetchUnigrams()`                 |
 | `fetchBigrams(limit:)`              | `FetchBigrams(int? limit)`        |
 | `fetchCandidateOverrides()`         | `FetchCandidateOverrides()`       |
@@ -167,6 +214,16 @@ dotnet run --project KeyKeyDecryptCLI -- dump decrypted.db
 | `makeIterator()`                    | `GetEnumerator()`                 |
 | `for gram in db { }`                | `foreach (var gram in db) { }`   |
 | `for await gram in db.async { }`    | `await foreach (var gram in db)` |
+
+## MJSR 匯出格式
+
+MJSR（Manjusri 文殊）是奇摩輸入法的匯出檔案格式：
+
+- **Header**: `MJSR version 1.0.0`
+- **使用者單字詞**: Tab 分隔格式 (`word\treading\tprobability\tbackoff`)
+- **`<database>` block**: 十六進位編碼的加密 SQLite 資料庫
+  - 包含 `user_bigram_cache` 和 `user_candidate_override_cache` 表格
+  - 加密密鑰: `mjsrexportmjsrex`（16 bytes）
 
 ## 授權
 

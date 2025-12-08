@@ -122,9 +122,9 @@ public sealed record Gram : IEquatable<Gram> {
   /// <param name="current">當前候選字</param>
   /// <param name="probability">機率權重</param>
   /// <returns>新的 Gram 實例</returns>
-  public static Gram CreateUnigram(string[] keyArray, string current, double probability = 0) =>
+  public static Gram CreateUnigram(IEnumerable<string> keyArray, string current, double probability = 0) =>
       new() {
-        KeyArray = keyArray,
+        KeyArray = keyArray.ToArray(),
         Current = current,
         Probability = probability,
         IsCandidateOverride = false
@@ -136,13 +136,14 @@ public sealed record Gram : IEquatable<Gram> {
   /// <param name="keyArray">注音鍵陣列</param>
   /// <param name="current">當前候選字</param>
   /// <param name="previous">前一個候選字</param>
+  /// <param name="probability">機率權重</param>
   /// <returns>新的 Gram 實例</returns>
-  public static Gram CreateBigram(string[] keyArray, string current, string previous) =>
+  public static Gram CreateBigram(IEnumerable<string> keyArray, string current, string previous, double probability = 0) =>
       new() {
-        KeyArray = keyArray,
+        KeyArray = keyArray.ToArray(),
         Current = current,
         Previous = string.IsNullOrEmpty(previous) ? null : previous,
-        Probability = 0,
+        Probability = probability,
         IsCandidateOverride = false
       };
 
@@ -153,9 +154,9 @@ public sealed record Gram : IEquatable<Gram> {
   /// <param name="current">當前候選字</param>
   /// <param name="probability">機率權重</param>
   /// <returns>新的 Gram 實例</returns>
-  public static Gram CreateCandidateOverride(string[] keyArray, string current, double probability) =>
+  public static Gram CreateCandidateOverride(IEnumerable<string> keyArray, string current, double probability) =>
       new() {
-        KeyArray = keyArray,
+        KeyArray = keyArray.ToArray(),
         Current = current,
         Probability = probability,
         IsCandidateOverride = true
