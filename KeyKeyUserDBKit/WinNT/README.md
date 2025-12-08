@@ -6,6 +6,8 @@
 
 這是 KeyKeyUserDBKit Swift Package 的 .NET 10 移植版本，可用於 Windows & Linux & macOS 等所有受 .NET 10 支援的平台系統版本。
 
+請務必詳讀下文「使用前注意」章節。
+
 ## 目的
 
 奇摩輸入法在 2012 年停止開發，最終官方支援的 macOS 系統版本是 macOS 10.8 Mountain Lion。從 macOS 10.9 Mavericks 開始，該輸入法原廠的片語編輯器徹底罷工。雖然官方釋出的最終原始碼（僅限 Yahoo 奇摩被允許授權公開的部分，不包含 SQLite CEROD）小修小補之後仍舊可以將片語編輯器重新建置，但因為 CEROD 原始碼的缺失、導致輸入法本體無法建置成「可以無縫讀取既有使用者片語資料」的樣子。
@@ -25,6 +27,30 @@
 - 🔤 解碼注音符號 (Bopomofo) qstring 欄位
 - 📖 讀取使用者詞彙資料（單元圖、雙元圖、候選字覆蓋）
 - 🔄 支援 `IEnumerable<Gram>` 與 `IAsyncEnumerable<Gram>` 迭代
+
+## 使用前注意
+
+奇摩輸入法的使用者片語辭典格式有兩種：`文殊文字檔（MJSR Text）` 以及 `SmartMandarinUserData.db`。
+
+這裡闡述一些注意事項。
+
+### 1. `文殊文字檔（MJSR Text）` 注意事項：
+
+使用奇摩輸入法自身的辭典編輯器匯出的文字檔案會是 `文殊文字檔（Manjusri Text）` 格式（下文簡稱「MJSR 資料」）。請務必注意該格式不要被擅自編輯：
+
+- 如果第一行有被修改過或遺失的話，則整篇檔案都會被拒絕讀入。
+- 如果檔案末尾的 `<database></database>` XML 章節遺失的話，您將無法復原「雙元圖快取」與「候選字覆蓋」這兩類資料。
+- 至於 Unigram 則都是以明文形式存儲在 MJSR 資料內的。
+
+### 2. `SmartMandarinUserData.db` 存取時的注意事項（WinNT 與 macOS 須知）：
+
+該資料檔案是經過 CEROD 加密的 SQLite 檔案、且被奇摩輸入法實時存取。奇摩輸入法自身的原廠詞庫會使用「跨軟體處理程序通訊（XPC）」技術與輸入法本體溝通。只有輸入法本體才會負責這個檔案的寫入。奇摩輸入法的片語編輯器就是這樣與輸入法本體溝通的，且只要運行片語編輯器就會觸發對該檔案的寫入行為（哪怕你並沒有增刪任何片語）。
+
+- ⚠️ 使用本工具讀取這個檔案的資料時，請務必**直接從該檔案被奇摩輸入法存取時的原始檔案存儲位置讀取**。
+
+- ☠️ 如果你非要複製出來一份自己保存備用的話，請恪守：奇摩輸入法本體必須不得正在運行於系統當中。不然的話，你複製出來的檔案一定是壞掉的。本工具的 CSharp 版本可能會因此直接放棄讀檔。
+  - 如果輸入法已經運行的話，請務必手動結束輸入法的 Process（處理程序，進程）、且不得使用暴力手段強行終止。**這是為了給輸入法充足的時間來寫入 SQLite 日誌內容**。
+  - 對此感到棘手者，請在系統輸入法清單內暫時移除奇摩輸入法、然後重新開機、再讀取 `SmartMandarinUserData.db` 檔案。
 
 ## 專案結構
 
@@ -104,7 +130,7 @@ foreach (var gram in allGrams)
 
 // 或分別讀取各類型資料
 var unigrams = db.FetchUnigrams();           // 單元圖
-var bigrams = db.FetchBigrams();             // 雙元圖
+var bigrams = db.FetchBigrams();             // 雙元圖快取
 var bigrams5 = db.FetchBigrams(5);           // 限制筆數
 var overrides = db.FetchCandidateOverrides(); // 候選字覆蓋
 
