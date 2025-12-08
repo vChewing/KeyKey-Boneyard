@@ -10,6 +10,12 @@ import Foundation
   import CCryptoBoringSSL
 #endif
 
+#if canImport(Darwin)
+  import SQLite3
+#else
+  import CSQLite
+#endif
+
 // MARK: - KeyKeyUserDBKit.UserPhraseTextFileObj
 
 extension KeyKeyUserDBKit {
@@ -440,11 +446,3 @@ extension Data {
     self = data
   }
 }
-
-// MARK: - SQLite Import
-
-#if canImport(Darwin)
-  import SQLite3
-#else
-  import CSQLite
-#endif

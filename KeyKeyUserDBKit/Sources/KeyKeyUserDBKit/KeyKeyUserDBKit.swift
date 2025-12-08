@@ -42,5 +42,5 @@
 /// ```
 public enum KeyKeyUserDBKit {
   /// 版本號
-  public static let version = "1.0.1"
+  public static let version = "1.0.2"
 }
