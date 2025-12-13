@@ -19,7 +19,7 @@
 
 ## 2) 目前狀態與主要發現（摘要）
 - 你已將 `KeyKey-Executable-Darwin.exe` 複製到 repo 根目錄並使用 `lipo -thin` 把 x86_64 slice 輸出為 `KeyKey-Executable-Darwin-x86_64.exe`。
-	- 為了節約空間，原始的 fat binary 已經移除。接下來的工作僅需要 `KeyKey-Executable-Darwin-x86_64.exe` 這一個 Executable 作為分析對象。
+	- 為了節約空間，原始的 fat binary 已經移除。接下來的工作僅需要 `KeyKey-Executable-Darwin-x86_64.exe` 這一個 Executable 作為分析對象。該檔案存放在 `./EXE-And-FactoryDB/` 目錄下。
 - 靜態檢查（`otool -L`）顯示 binary 連結了 `/usr/lib/libcrypto.0.9.7.dylib`（OpenSSL），因此 openssl 函式如 `PEM_read_bio_RSA_PUBKEY`、`RSA_public_decrypt` 可用於抽取/解密操作。
 - 使用 `strings` 找到以下重要關鍵字：`KeyKey.db`, `:cerod:`, `cerod`, 以及 `-----BEGIN PUBLIC KEY-----`（PEM header），表示 binary 中包含 PEM 格式的公鑰。
 - Repo 原始碼中 `Distributions/Takao/Keyring/SQLiteCryptoInit.cpp` 與 `Frameworks/Minotaur/Source/Minotaur.cpp` 顯示 `Minos::GetBack()` 使用 RSA public decrypt (OpenSSL) 邏輯來從 `VendorDonneCle` / `UserDonneCle` 裡恢復 passphrase，此 passphrase 在 loader 中用於 `:cerod:` 字串（`FetchSQLiteCERODKey`）或 `sqlite3_key`/`sqlite3_rekey` 調用。
@@ -32,35 +32,35 @@
 
 1) 切出 x86_64 slice：
 ```bash
-lipo -thin x86_64 KeyKey-Executable-Darwin.exe -output KeyKey-Executable-Darwin-x86_64.exe
+lipo -thin x86_64 KeyKey-Executable-Darwin.exe -output ./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe
 ```
-該步驟已經完成。詳情請洽 `KeyKey-Executable-Darwin-x86_64.exe`。
+該步驟已經完成。詳情請洽 `./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe`。
 
 2) 檢查 binary 的動態連結庫：
 ```bash
-otool -L KeyKey-Executable-Darwin-x86_64.exe
+otool -L ./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe
 ```
 - 在輸出中看到 `/usr/lib/libcrypto.0.9.7.dylib`，表示 OpenSSL 存在，能用 openssl 對 PEM/encoded block 做處理。
 
 3) 搜尋 strings：
 ```bash
-strings -a KeyKey-Executable-Darwin-x86_64.exe | egrep -i 'cerod|:cerod:|BEGIN PUBLIC KEY|BEGIN RSA PUBLIC KEY'
+strings -a ./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe | egrep -i 'cerod|:cerod:|BEGIN PUBLIC KEY|BEGIN RSA PUBLIC KEY'
 ```
 - 輸出包含 `KeyKey.db`, `:cerod:`, `cerod` 以及 `-----BEGIN PUBLIC KEY-----`。
 
 4) 若要查 offsets（可使用此流程）、導出 PEM 與 encoded block：
 ```bash
-strings -a -t x KeyKey-Executable-Darwin-x86_64.exe | egrep -i 'BEGIN PUBLIC KEY|END PUBLIC KEY' -n
+strings -a -t x ./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe | egrep -i 'BEGIN PUBLIC KEY|END PUBLIC KEY' -n
 # 使用 dd 將公鑰段以 offset 與 count 導出
 # (將下面的 $start_dec $count 換為實際數值)
-dd if=KeyKey-Executable-Darwin-x86_64.exe of=pub.pem bs=1 skip=$start_dec count=$count
+dd if=./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe of=pub.pem bs=1 skip=$start_dec count=$count
 file pub.pem
 ```
 
 5) 如果你能找到 encodedBlock 的 start/length：
 ```bash
 # 將 encoded block 導出
-dd if=KeyKey-Executable-Darwin-x86_64.exe of=encoded.bin bs=1 skip=$encoded_start count=$encoded_len
+dd if=./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe of=encoded.bin bs=1 skip=$encoded_start count=$encoded_len
 
 # 使用 openssl 公鑰解密 (verify)
 openssl rsautl -verify -inkey pub.pem -pubin -in encoded.bin -out decrypted.bin
@@ -94,9 +94,9 @@ cat decrypted.bin # 若為 passphrase 應可直接顯示或呈現明文字串
 ---
 
 ## 5) 如果你要交給其他 AI: 必需提供給接手者的資源
-- Binary: thin `KeyKey-Executable-Darwin-x86_64.exe`。
+- Binary: thin `./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe`。
 - DB: `SmartMandarinUserData.db`（原始加密版本）。
-	- Sinica Corpus 資產 `KeyKey.db`（CEROD主DB）並未隨附。
+	- Sinica Corpus 資產 `./EXE-And-FactoryDB/KeyKey.db`（CEROD主DB）。
 - Source: `YahooKeyKey-Source-1.1.2528`，關鍵檔案列表：
   - `Distributions/Takao/Keyring/SQLiteCryptoInit.cpp`
   - `Distributions/Takao/Keyring/DevUserDBKeyPhrase.c`
@@ -207,7 +207,7 @@ yahookeykeyuserdb
 ```
 
 ### 驗證結果
-從 Production 二進位檔 `KeyKey-Executable-Darwin-x86_64.exe` 中提取並驗證：
+從 Production 二進位檔 `./EXE-And-FactoryDB/KeyKey-Executable-Darwin-x86_64.exe` 中提取並驗證：
 - 在二進位檔 offset `0x1aa879` 找到與 Dev 源碼相同的加密塊
 - 使用 RSA public decrypt 成功解密得到 `yahookeykeyuserdb`
 - **Production 版本使用與 Dev 相同的 passphrase！**
