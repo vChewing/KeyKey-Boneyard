@@ -1,0 +1,7 @@
+process attach -p 73750
+breakpoint set --address 0x1000759b0
+breakpoint set --address 0x100160018
+breakpoint command add 1 -s command -o "register read rdi rsi" -o "memory read --format c --count 128 --size 1 $rdi" -o "memory read --format c --count 256 --size 1 $rsi" -o "bt" -o "process continue"
+breakpoint command add 2 -s command -o "register read rdi rsi" -o "memory read --format c --count 128 --size 1 $rdi" -o "memory read --format c --count 256 --size 1 $rsi" -o "bt" -o "process continue"
+process continue
+quit

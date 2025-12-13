@@ -1,0 +1,18 @@
+# LLDB script to capture CEROD filename at the caller (address discovered by static scan)
+# Usage:
+#  lldb -- /path/to/executable
+#  (lldb) command source scripts/cerod_breakpoint.lldb
+# Or run `lldb -s scripts/cerod_breakpoint.lldb -- /path/to/executable`
+
+# Break at the caller that loads activation key and ':cerod:' then calls the open-wrapper
+breakpoint set --address 0x10006c4cf
+
+# When hit: print potential string args for both x86_64 and arm64, show backtrace, and continue
+breakpoint command add 1 -s command -o "p (char*)$rdi" -o "p (char*)$x0" -o "bt" -o "continue"
+
+# Additionally set a breakpoint at the open-wrapper entry (fallback)
+breakpoint set --address 0x100160018
+breakpoint command add 2 -s command -o "p (char*)$rdi" -o "p (char*)$x0" -o "bt" -o "continue"
+
+# Helpful tip: when running under lldb, stop the process before the IME becomes foreground to avoid system-wide freezes.
+# Run in an isolated VM or secondary user session for safety.

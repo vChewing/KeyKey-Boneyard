@@ -1,0 +1,10 @@
+breakpoint set --name sqlite3_activate_cerod
+breakpoint set --name sqlite3_key
+breakpoint set --name sqlite3_open
+target create -- /Library/Input\ Methods/Yahoo!\ KeyKey.app/Contents/MacOS/Yahoo!\ KeyKey
+breakpoint set --address 0x1000759b0
+breakpoint set --address 0x100160018
+breakpoint command add 4 -s command -o "register read rdi rsi" -o "memory read --format c --count 128 --size 1 $rdi" -o "memory read --format c --count 256 --size 1 $rsi" -o "bt" -o "thread continue"
+breakpoint command add 5 -s command -o "register read rdi rsi" -o "memory read --format c --count 128 --size 1 $rdi" -o "memory read --format c --count 256 --size 1 $rsi" -o "bt" -o "thread continue"
+process launch -- /Library/Input\ Methods/Yahoo!\ KeyKey.app/Contents/MacOS/Yahoo!\ KeyKey
+quit

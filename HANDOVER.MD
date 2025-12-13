@@ -311,9 +311,11 @@ counter_block 結構:
 ```
 
 #### AES Key
-- **Passphrase**: `yahookeykeyuserdb` (17 bytes)
+- **Passphrase** (User DB): `yahookeykeyuserdb` (17 bytes)
 - **AES Key**: 取前 16 bytes = `yahookeykeyuserd`
 - **Hex**: `7961686f6f6b65796b65797573657264`
+
+> 原廠的 Vendor passphrase：B359D6FE-BEB4-411B-82F8-31E347B6C438（可視為 CEROD phrase）。
 
 ### 解密腳本
 
